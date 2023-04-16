@@ -245,8 +245,8 @@ pub async fn help(
     embed.title("Help");
     embed.description("
     Transbot is a bot that transcribes voice messages into text. 
-    To use it, right click on a message > Apps > Transcribe Voice Message.
-    You can additionaly use the `/autorespond` command to automatically respond to voice messages.
+    To use it, simply send a voice message and the bot will automatically transcribe it.
+    Alternatively, you can right click on a message > Apps > Transcribe Voice Message.
     It uses OpenAI's Whisper API to generate the transcript. 
     It is still in beta, so please report any bugs you find to the support server. 
     You can also suggest features to add to the bot. 
