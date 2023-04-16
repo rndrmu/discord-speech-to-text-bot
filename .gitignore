@@ -1,0 +1,6 @@
+/target
+/out/
+/ggml-medium.bin
+/whisper.cpp
+/whisper.cpps
+ggml-*

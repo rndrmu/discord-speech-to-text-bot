@@ -1,0 +1,17 @@
+[package]
+name = "discord_stt_bot"
+version = "0.1.0"
+edition = "2021"
+default-run = "discord_stt_bot"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+poise = "0.5.2"
+whisper-rs = "0.5.0"
+autometrics = { version = "*", features = ["prometheus-exporter"] }
+tokio = { version = "1.27.0", features = ["full"] }
+hound = "3.5.0"
+anyhow = "1.0.70"
+reqwest = "0.11.16"
+once_cell = { version = "1.17.1", features = ["parking_lot"] }
