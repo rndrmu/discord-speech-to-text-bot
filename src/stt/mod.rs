@@ -19,9 +19,7 @@ fn attachment_is_audio(attachment: serenity::Attachment) -> bool {
 
 
 pub async fn transcode_video(nin: &str, out: &str) -> Result<()> {
-    let _res = tokio::process::Command::new("ffmpeg")
-        .arg("-loglevel")
-        .arg("quiet")
+    let ffmpeg_res = tokio::process::Command::new("ffmpeg")
         .arg("-y")
         .arg("-i")
         .arg(nin)
@@ -29,8 +27,12 @@ pub async fn transcode_video(nin: &str, out: &str) -> Result<()> {
         .arg("16000")
         .arg(out)
         .status()
-        .await?;
-    Ok(())
+        .await;
+
+    match ffmpeg_res {
+        Ok(_) => Ok(()),
+        Err(e) => Err(anyhow!(e)),
+    }
 }
 
 pub async fn speech_to_text(file: String) -> Result<String> {

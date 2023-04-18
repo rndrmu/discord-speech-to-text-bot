@@ -1,2 +1,0 @@
-[alias]
-download_model = "run --release --bin download_model"
