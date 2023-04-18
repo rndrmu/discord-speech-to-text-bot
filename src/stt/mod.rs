@@ -21,6 +21,8 @@ fn attachment_is_audio(attachment: serenity::Attachment) -> bool {
 
 pub async fn transcode_video(nin: &str, out: &str) -> Result<()> {
     let ffmpeg_res = tokio::process::Command::new("ffmpeg")
+        .arg("-loglevel")
+        .arg("quiet")
         .arg("-y")
         .arg("-i")
         .arg(nin)

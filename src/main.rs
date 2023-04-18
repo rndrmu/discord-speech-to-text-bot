@@ -128,6 +128,13 @@ async fn register(ctx: Context<'_>) -> Result<(), Error> {
 
 #[tokio::main]
 async fn main() {
+
+    
+    // if .env file exists, load it
+    if PathBuf::from(".env").exists() {
+        dotenv::dotenv().ok();
+    }
+
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![
