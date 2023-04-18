@@ -4,3 +4,4 @@
 /whisper.cpp
 /whisper.cpps
 ggml-*
+.env
