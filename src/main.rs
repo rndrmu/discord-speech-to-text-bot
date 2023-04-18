@@ -6,19 +6,21 @@ use tokio::fs::File;
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext};
 use anyhow::{Result, anyhow};
 use once_cell::sync::Lazy;
-use poise::serenity_prelude::{self as serenity, Mutex};
-use tokio::io::AsyncReadExt;
+use poise::serenity_prelude::{self as serenity};
+use tokio::{
+    io::AsyncReadExt,
+    sync::Mutex, 
+    sync::MutexGuard
+};
 use hound;
 
 use stt::*;
 
-/// Initial, fast model
-pub static WHISPER_CTX: Lazy<Mutex<WhisperContext>> =
-    Lazy::new(|| Mutex::new(WhisperContext::new("./ggml-small.bin").unwrap()));
+pub struct Data {
+    pub fast_whisper: Lazy<Mutex<WhisperContext>>,
+    pub slow_whisper: Lazy<Mutex<WhisperContext>>,
+} // User data, which is stored and accessible in all command invocations
 
-/// More accurate model (but slower) - for post processing on demand
-pub static WHISPER_POST_PROCESS_CTX: Lazy<Mutex<WhisperContext>> =
-    Lazy::new(|| Mutex::new(WhisperContext::new("./ggml-medium.bin").unwrap()));
 
 #[derive(Debug)]
 pub enum Error {
@@ -45,7 +47,6 @@ impl fmt::Display for Error {
     }
 }
 
-pub struct Data {} // User data, which is stored and accessible in all command invocations
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[poise::command(
@@ -83,7 +84,8 @@ pub async fn transcribe(ctx: Context<'_>, msg: serenity::Message) -> Result<(), 
     }
 
     transcode_video(&fname, &out).await.unwrap();
-    let stt_res = speech_to_text(out.clone()).await;
+    let whisper_ctx = ctx.data().fast_whisper.lock().await;
+    let stt_res = speech_to_text(out.clone(), whisper_ctx).await;
 
     // if transcript exceeds 2000 characters, split it into multiple messages
     println!("Transcript: {:?}", stt_res);
@@ -151,7 +153,10 @@ async fn main() {
         .intents(serenity::GatewayIntents::GUILD_MESSAGES | serenity::GatewayIntents::MESSAGE_CONTENT )
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
-                Ok(Data {})
+                Ok(Data {
+                    fast_whisper: Lazy::new(|| Mutex::new(WhisperContext::new("./ggml-small.bin").unwrap())),
+                    slow_whisper: Lazy::new(|| Mutex::new(WhisperContext::new("./ggml-medium.bin").unwrap())),
+                })
             })
         });
 

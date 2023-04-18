@@ -3,12 +3,13 @@ mod transcode;
 
 
 use std::{path::PathBuf, fmt, io::Cursor};
-use tokio::fs::File;
+use once_cell::sync::Lazy;
+use tokio::{fs::File, sync::MutexGuard};
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext};
-use poise::serenity_prelude::{self as serenity, Mutex};
+use poise::{serenity_prelude::{self as serenity, Mutex}};
 use anyhow::{Result, anyhow};
 
-use crate::WHISPER_CTX;
+use crate::Data;
 
 fn attachment_is_audio(attachment: serenity::Attachment) -> bool {
     attachment.content_type.unwrap_or_else(|| 
@@ -35,9 +36,9 @@ pub async fn transcode_video(nin: &str, out: &str) -> Result<()> {
     }
 }
 
-pub async fn speech_to_text(file: String) -> Result<String> {
+pub async fn speech_to_text(file: String, whisper_ctx: MutexGuard<'_, WhisperContext>) -> Result<String> {
 
-    let mut ctx = WHISPER_CTX.lock().await;
+    let mut ctx = whisper_ctx;
 
 
     let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 0 });
@@ -52,18 +53,15 @@ pub async fn speech_to_text(file: String) -> Result<String> {
 
 
     let file_path = PathBuf::from(file.clone());
-    let res = tokio::task::spawn_blocking(move || -> Result<String> {
-        ctx.full(params, &wav_to_integer_mono(&file_path)?)
+    ctx.full(params, &wav_to_integer_mono(&file_path)?)
             .map_err(|x| anyhow!(format!("{x:?}")))?;
 
-        let num_segments = ctx.full_n_segments();
-        let res = (0..num_segments)
+    let num_segments = ctx.full_n_segments();
+    let res = (0..num_segments)
             .flat_map(|i| ctx.full_get_segment_text(i).map_err(|x| anyhow!(format!("{x:?}"))))
             .collect::<Vec<String>>()
             .join("\n");
-        Ok(res)
-    })
-    .await??;
+
 
     Ok(res)
 }

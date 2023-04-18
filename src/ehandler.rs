@@ -32,7 +32,11 @@ pub async fn event_listener(
             }
         
             transcode_video(&fname, &out).await.unwrap();
-            let stt_res = speech_to_text(out.clone()).await;
+            let whisper_ctx = data.fast_whisper.lock().await;
+            let stt_res = speech_to_text(
+                out.clone(),
+                whisper_ctx
+            ).await;
         
             // if transcript exceeds 2000 characters, split it into multiple messages
         
